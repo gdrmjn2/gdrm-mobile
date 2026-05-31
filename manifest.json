@@ -1,6 +1,6 @@
 {
-  "name": "WMS GDRM Portal",
-  "short_name": "WMS GDRM",
+  "name": "GDRM PORTAL",
+  "short_name": "GDRM LEVEL UP",
   "description": "Warehouse Management System GDRM - Portal Monitoring & Penginputan",
   "start_url": "/",
   "display": "standalone",
