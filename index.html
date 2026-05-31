@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0F1923">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="WMS GDRM">
+<title>WMS GDRM Portal</title>
+<link rel="manifest" href="manifest.json">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0F1923;--surface:#162230;--card:#1C2E40;
+  --border:#2A3F54;--accent:#00C896;--accent2:#0089C8;
+  --text:#E8F4F0;--muted:#7A9BB0;--danger:#E24B4A;--warn:#EF9F27
+}
+html,body{height:100%;font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--text);font-size:15px;overflow-x:hidden}
+
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+
+/* ===== LOGIN ===== */
+#login-screen{align-items:center;justify-content:center;padding:1.5rem;background:var(--bg)}
+.login-box{background:var(--surface);border:0.5px solid var(--border);border-radius:24px;padding:2rem 1.75rem;width:100%;max-width:340px;text-align:center}
+.logo-area{margin-bottom:1.5rem}
+.logo-img-wrap{display:flex;justify-content:center;margin-bottom:0.75rem}
+.logo-img-wrap img{width:130px;height:130px;object-fit:contain;border-radius:16px}
+.logo-sub{font-size:12px;color:var(--muted);letter-spacing:0.5px}
+
+.pin-label{font-size:13px;color:var(--muted);margin-bottom:1rem;min-height:18px}
+.pin-display{display:flex;justify-content:center;gap:14px;margin-bottom:1.5rem}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:all 0.18s}
+.pin-dot.filled{background:var(--accent);border-color:var(--accent);transform:scale(1.15)}
+.pin-dot.error{background:var(--danger);border-color:var(--danger)}
+.pin-dot.shake{animation:shake 0.4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:230px;margin:0 auto}
+.key{background:var(--card);border:0.5px solid var(--border);border-radius:50%;width:62px;height:62px;font-size:22px;font-weight:600;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.1s,transform 0.1s;-webkit-tap-highlight-color:transparent;user-select:none}
+.key:active{background:#223344;transform:scale(0.9)}
+.key.key-del{font-size:17px;color:var(--muted)}
+.key.key-empty{background:transparent;border:none;pointer-events:none}
+.err-msg{color:var(--danger);font-size:12px;margin-top:0.875rem;min-height:16px}
+.music-btn{margin-top:1rem;background:transparent;border:0.5px solid var(--border);border-radius:20px;color:var(--muted);padding:5px 14px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.music-btn.on{border-color:var(--accent);color:var(--accent)}
+
+/* ===== TOPBAR ===== */
+.topbar{background:var(--surface);border-bottom:0.5px solid var(--border);padding:0.75rem 1rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.topbar-logo img{width:44px;height:44px;object-fit:contain;border-radius:8px}
+.topbar-divider{width:1px;height:26px;background:var(--border)}
+.topbar-title{font-weight:700;font-size:14px}
+.topbar-sub{font-size:11px;color:var(--muted)}
+.btn-back{background:transparent;border:0.5px solid var(--border);border-radius:8px;color:var(--muted);padding:6px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px}
+.btn-back:active{border-color:var(--danger);color:var(--danger)}
+
+/* ===== HOME ===== */
+.home-content{padding:1.5rem 1rem 5rem;flex:1}
+.home-greeting{margin-bottom:1.75rem}
+.home-greeting h2{font-size:18px;font-weight:700;margin-bottom:4px}
+.home-greeting p{font-size:13px;color:var(--muted)}
+.role-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;margin-top:6px}
+.rb-admin{background:#0D2B20;color:#00C896}
+.rb-input{background:#0D1E2B;color:#5BA8D4}
+
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.menu-tile{background:var(--card);border:0.5px solid var(--border);border-radius:18px;padding:1.5rem 1rem;display:flex;flex-direction:column;align-items:center;text-align:center;cursor:pointer;text-decoration:none;color:inherit;gap:10px;transition:border-color 0.15s,background 0.15s,transform 0.15s;-webkit-tap-highlight-color:transparent;position:relative;overflow:hidden}
+.menu-tile:active{transform:scale(0.96)}
+.menu-tile.monitoring{border-color:#1A3D2B}
+.menu-tile.monitoring:active{border-color:var(--accent);background:#162E22}
+.menu-tile.penginputan{border-color:#1A2B3D}
+.menu-tile.penginputan:active{border-color:var(--accent2);background:#162232}
+.tile-icon{width:60px;height:60px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.ti-monitor{background:#0D2B20}
+.ti-input{background:#0D1E2B}
+.tile-title{font-size:14px;font-weight:700;line-height:1.3}
+.tile-count{font-size:11px;color:var(--muted);margin-top:2px}
+.tile-arrow{font-size:20px;color:var(--border)}
+.tile-badge{position:absolute;top:10px;right:8px;font-size:9px;padding:2px 6px;border-radius:10px;font-weight:700}
+.tb-all{background:#0D2B20;color:#00C896}
+.tb-limit{background:#0D1E2B;color:#5BA8D4}
+
+/* ===== CARDS ===== */
+.content{padding:1rem 1rem 5rem}
+.section-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:1.25rem 0 0.65rem 2px;font-weight:600}
+.section-label:first-child{margin-top:0}
+.app-card{background:var(--card);border:0.5px solid var(--border);border-radius:14px;padding:0.875rem 1rem;display:flex;align-items:center;gap:12px;margin-bottom:0.6rem;text-decoration:none;color:inherit;transition:border-color 0.15s,background 0.15s;-webkit-tap-highlight-color:transparent}
+.app-card:not(.dev):active{background:#1E3347;border-color:var(--accent)}
+.app-card.dev{opacity:0.45;pointer-events:none}
+.card-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.ci-a{background:#0D2B20}.ci-b{background:#0D1E2B}.ci-c{background:#1A1A0A}.ci-d{background:#1A0D1A}.ci-dev{background:#1A1A1A}
+.card-body{flex:1;min-width:0}
+.card-title{font-weight:600;font-size:13px;line-height:1.4}
+.card-desc{font-size:12px;color:var(--muted);margin-top:2px}
+.card-badges{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
+.badge{font-size:10px;padding:2px 7px;border-radius:5px;font-weight:600}
+.b-green{background:#0D2B20;color:#00C896}
+.b-blue{background:#0D1E2B;color:#5BA8D4}
+.b-cam{background:#1A1A0A;color:#EF9F27}
+.b-dev{background:#1A1A1A;color:#7A9BB0}
+.card-arrow{color:var(--border);font-size:18px;flex-shrink:0}
+
+/* ===== MUSIC BAR ===== */
+#music-bar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:0.5px solid var(--border);padding:0.6rem 1rem;display:none;align-items:center;gap:10px;z-index:30}
+#music-bar.visible{display:flex}
+.music-note-anim{font-size:18px;animation:notebounce 1s infinite alternate}
+.music-note-anim.paused{animation-play-state:paused}
+@keyframes notebounce{from{transform:translateY(0) rotate(-5deg)}to{transform:translateY(-4px) rotate(5deg)}}
+.track-info{flex:1;min-width:0}
+.track-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track-sub{font-size:10px;color:var(--muted)}
+.play-btn{background:var(--accent);border:none;border-radius:50%;width:32px;height:32px;color:#0F1923;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.vol-btn{background:transparent;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px}
+
+/* PWA */
+#install-banner{background:var(--surface);border-top:0.5px solid var(--border);padding:0.7rem 1rem;display:none;align-items:center;gap:10px;position:fixed;bottom:52px;left:0;right:0;z-index:25}
+#install-banner.show{display:flex}
+#install-banner span{flex:1;font-size:12px;color:var(--muted)}
+#install-banner .inst-btn{background:var(--accent);color:#0F1923;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer}
+#install-banner .close-btn{background:transparent;border:none;color:var(--muted);font-size:16px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login-screen" class="screen active">
+  <div class="login-box">
+    <div class="logo-area">
+      <div class="logo-img-wrap">
+        <img src="logo.png" alt="GDRM JN2 Mayora">
+      </div>
+      <div class="logo-sub">Warehouse Management System · GDRM JN2</div>
+    </div>
+    <div class="pin-label" id="pin-label">Masukkan PIN</div>
+    <div class="pin-display">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+      <div class="pin-dot" id="d4"></div>
+    </div>
+    <div class="keypad">
+      <button class="key" onclick="pressKey('1')">1</button>
+      <button class="key" onclick="pressKey('2')">2</button>
+      <button class="key" onclick="pressKey('3')">3</button>
+      <button class="key" onclick="pressKey('4')">4</button>
+      <button class="key" onclick="pressKey('5')">5</button>
+      <button class="key" onclick="pressKey('6')">6</button>
+      <button class="key" onclick="pressKey('7')">7</button>
+      <button class="key" onclick="pressKey('8')">8</button>
+      <button class="key" onclick="pressKey('9')">9</button>
+      <div class="key key-empty"></div>
+      <button class="key" onclick="pressKey('0')">0</button>
+      <button class="key key-del" onclick="deleteLast()">⌫</button>
+    </div>
+    <div class="err-msg" id="err-msg"></div>
+    <button class="music-btn on" id="music-toggle-btn" onclick="toggleMusicOnOff()">🎷 Jazz On</button>
+  </div>
+</div>
+
+<!-- ===== HOME ===== -->
+<div id="home-screen" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo"><img src="logo.png" alt="logo"></div>
+      <div class="topbar-divider"></div>
+      <div>
+        <div class="topbar-title">WMS GDRM JN2</div>
+        <div class="topbar-sub">Portal Warehouse</div>
+      </div>
+    </div>
+    <button class="btn-back" onclick="doLogout()">⬅ Keluar</button>
+  </div>
+  <div class="home-content">
+    <div class="home-greeting">
+      <h2>Selamat Datang 👋</h2>
+      <p>Pilih menu yang ingin diakses</p>
+      <span class="role-badge" id="role-badge">—</span>
+    </div>
+    <div class="menu-grid">
+      <div class="menu-tile monitoring" onclick="goTo('monitoring-screen')" id="tile-monitoring">
+        <div class="tile-badge tb-all">Semua Akses</div>
+        <div class="tile-icon ti-monitor">📊</div>
+        <div>
+          <div class="tile-title">Menu Monitoring</div>
+          <div class="tile-count">6 menu</div>
+        </div>
+        <div class="tile-arrow">›</div>
+      </div>
+      <div class="menu-tile penginputan" onclick="goTo('penginputan-screen')">
+        <div class="tile-badge tb-limit">Input Akses</div>
+        <div class="tile-icon ti-input">✏️</div>
+        <div>
+          <div class="tile-title">Menu Penginputan</div>
+          <div class="tile-count">4 menu</div>
+        </div>
+        <div class="tile-arrow">›</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MONITORING ===== -->
+<div id="monitoring-screen" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo"><img src="logo.png" alt="logo"></div>
+      <div class="topbar-divider"></div>
+      <div>
+        <div class="topbar-title">📊 Monitoring</div>
+        <div class="topbar-sub">WMS GDRM JN2</div>
+      </div>
+    </div>
+    <button class="btn-back" onclick="goBack()">⬅ Kembali</button>
+  </div>
+  <div class="content">
+    <div class="section-label">Menu Monitoring</div>
+    <a class="app-card" href="https://wms-gdrm-dashboard.vercel.app/" target="_blank">
+      <div class="card-icon ci-a">📦</div>
+      <div class="card-body">
+        <div class="card-title">Monitoring RM Solid</div>
+        <div class="card-desc">GDRM Dashboard</div>
+        <div class="card-badges">
+          <span class="badge b-green">Aktif</span>
+          <span class="badge b-blue">Supabase</span>
+          <span class="badge b-blue">AppScript</span>
+        </div>
+      </div>
+      <div class="card-arrow">›</div>
+    </a>
+    <a class="app-card" href="https://script.google.com/macros/s/AKfycbyeh0CnKYB-Gvd9hw3YDZRWLisG1s6DOPV_2-eVb8OFKaNV-tY3KFn1rH-vwgymqgs1/exec" target="_blank">
+      <div class="card-icon ci-b">🚚</div>
+      <div class="card-body">
+        <div class="card-title">Monitoring Kedatangan RM</div>
+        <div class="card-desc">Service Level — Jayanti 2</div>
+        <div class="card-badges">
+          <span class="badge b-green">Aktif</span>
+          <span class="badge b-blue">AppScript</span>
+        </div>
+      </div>
+      <div class="card-arrow">›</div>
+    </a>
+    <div class="app-card dev">
+      <div class="card-icon ci-dev">🗓️</div>
+      <div class="card-body">
+        <div class="card-title">Monitoring Reservasi</div>
+        <div class="card-desc">Proses Pengembangan</div>
+        <div class="card-badges"><span class="badge b-dev">Segera</span></div>
+      </div>
+    </div>
+    <div class="app-card dev">
+      <div class="card-icon ci-dev">🛢️</div>
+      <div class="card-body">
+        <div class="card-title">Monitoring RM Minyak</div>
+        <div class="card-desc">Proses Pengembangan</div>
+        <div class="card-badges"><span class="badge b-dev">Segera</span></div>
+      </div>
+    </div>
+    <div class="app-card dev">
+      <div class="card-icon ci-dev">♻️</div>
+      <div class="card-body">
+        <div class="card-title">Monitoring Waste BSWP</div>
+        <div class="card-desc">Proses Pengembangan</div>
+        <div class="card-badges"><span class="badge b-dev">Segera</span></div>
+      </div>
+    </div>
+    <div class="app-card dev">
+      <div class="card-icon ci-dev">📉</div>
+      <div class="card-body">
+        <div class="card-title">Monitoring BS Ekonomis</div>
+        <div class="card-desc">Proses Pengembangan</div>
+        <div class="card-badges"><span class="badge b-dev">Segera</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PENGINPUTAN ===== -->
+<div id="penginputan-screen" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo"><img src="logo.png" alt="logo"></div>
+      <div class="topbar-divider"></div>
+      <div>
+        <div class="topbar-title">✏️ Penginputan</div>
+        <div class="topbar-sub">Stok Keeper & Checker</div>
+      </div>
+    </div>
+    <button class="btn-back" onclick="goBack()">⬅ Kembali</button>
+  </div>
+  <div class="content">
+    <div class="section-label">Menu Penginputan</div>
+    <a class="app-card" href="https://transaksi-out.vercel.app" target="_blank">
+      <div class="card-icon ci-c">📤</div>
+      <div class="card-body">
+        <div class="card-title">Penginputan RM Out (Checker Out)</div>
+        <div class="card-desc">RM ke Produksi</div>
+        <div class="card-badges">
+          <span class="badge b-green">Aktif</span>
+          <span class="badge b-cam">📷 Kamera</span>
+          <span class="badge b-blue">Supabase</span>
+        </div>
+      </div>
+      <div class="card-arrow">›</div>
+    </a>
+    <a class="app-card" href="https://sto-hold.vercel.app" target="_blank">
+      <div class="card-icon ci-d">🔄</div>
+      <div class="card-body">
+        <div class="card-title">Penginputan STO</div>
+        <div class="card-desc">Pengiriman RM Antar Plant</div>
+        <div class="card-badges">
+          <span class="badge b-green">Aktif</span>
+          <span class="badge b-cam">📷 Kamera</span>
+          <span class="badge b-blue">Supabase</span>
+        </div>
+      </div>
+      <div class="card-arrow">›</div>
+    </a>
+    <div class="app-card dev">
+      <div class="card-icon ci-dev">🗑️</div>
+      <div class="card-body">
+        <div class="card-title">Penginputan Waste</div>
+        <div class="card-desc">Proses Pengembangan</div>
+        <div class="card-badges"><span class="badge b-dev">Segera</span></div>
+      </div>
+    </div>
+    <div class="app-card dev">
+      <div class="card-icon ci-dev">💰</div>
+      <div class="card-body">
+        <div class="card-title">Penginputan BS Ekonomis</div>
+        <div class="card-desc">Proses Pengembangan</div>
+        <div class="card-badges"><span class="badge b-dev">Segera</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Music Bar -->
+<div id="music-bar">
+  <span class="music-note-anim" id="music-note">🎷</span>
+  <div class="track-info">
+    <div class="track-name" id="track-name">Smooth Jazz · Loading...</div>
+    <div class="track-sub">WMS GDRM JN2 · Mayora</div>
+  </div>
+  <button class="vol-btn" id="vol-btn" onclick="toggleMusicOnOff()">🔊</button>
+  <button class="play-btn" id="play-btn" onclick="togglePlayPause()">⏸</button>
+</div>
+
+<!-- PWA Install -->
+<div id="install-banner">
+  <span>💡 Install portal di HP kamu</span>
+  <button class="inst-btn" onclick="installPWA()">Install</button>
+  <button class="close-btn" onclick="closeBanner()">✕</button>
+</div>
+
+<script>
+// ===== AUTH =====
+const PINS = { '14045':'admin', '0000':'input' };
+let currentPin='', currentRole='';
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function goTo(id){
+  if(currentRole==='input' && id==='monitoring-screen') return;
+  showScreen(id);
+}
+function goBack(){ showScreen('home-screen'); }
+function doLogout(){
+  currentPin=''; currentRole='';
+  updateDots();
+  document.getElementById('pin-label').textContent='Masukkan PIN';
+  document.getElementById('err-msg').textContent='';
+  pauseMusic();
+  document.getElementById('music-bar').classList.remove('visible');
+  showScreen('login-screen');
+}
+
+// ===== PIN =====
+function pressKey(k){
+  if(currentPin.length>=5) return;
+  currentPin+=k;
+  updateDots();
+  playBeep(k);
+  if(PINS[currentPin]!==undefined) setTimeout(checkPin,200);
+}
+function deleteLast(){
+  if(currentPin.length>0){currentPin=currentPin.slice(0,-1);updateDots();}
+}
+function updateDots(){
+  for(let i=0;i<5;i++){
+    const d=document.getElementById('d'+i);
+    if(d){d.classList.toggle('filled',i<currentPin.length);d.classList.remove('error','shake');}
+  }
+}
+function checkPin(){
+  const role=PINS[currentPin];
+  if(role){
+    currentRole=role;
+    document.getElementById('pin-label').textContent='✓ Berhasil masuk!';
+    for(let i=0;i<5;i++){const d=document.getElementById('d'+i);if(d)d.classList.add('filled');}
+    playSuccess();
+    const rb=document.getElementById('role-badge');
+    const tm=document.getElementById('tile-monitoring');
+    if(role==='admin'){
+      rb.textContent='Akses Penuh (Admin)';rb.className='role-badge rb-admin';
+      tm.style.opacity='1';tm.style.pointerEvents='';
+    } else {
+      rb.textContent='Akses: Menu Penginputan';rb.className='role-badge rb-input';
+      tm.style.opacity='0.35';tm.style.pointerEvents='none';
+    }
+    setTimeout(()=>{
+      showScreen('home-screen');
+      document.getElementById('music-bar').classList.add('visible');
+      startJazz();
+    },600);
+  } else {
+    document.getElementById('err-msg').textContent='PIN salah, coba lagi.';
+    document.getElementById('pin-label').textContent='PIN salah ✗';
+    for(let i=0;i<5;i++){const d=document.getElementById('d'+i);if(d){d.classList.add('error','shake');}}
+    playError();
+    setTimeout(()=>{
+      currentPin='';updateDots();
+      document.getElementById('err-msg').textContent='';
+      document.getElementById('pin-label').textContent='Masukkan PIN';
+    },1000);
+  }
+}
+
+// ===== AUDIO ENGINE =====
+let audioCtx=null;
+function getCtx(){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playBeep(key){
+  if(!musicOn) return;
+  try{
+    const ctx=getCtx();
+    const n={'1':261,'2':293,'3':329,'4':349,'5':392,'6':440,'7':493,'8':523,'9':587,'0':220};
+    const f=n[key]||300;
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.frequency.value=f;o.type='sine';
+    g.gain.setValueAtTime(0.1,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.1);
+    o.start();o.stop(ctx.currentTime+0.1);
+  }catch(e){}
+}
+function playSuccess(){
+  if(!musicOn) return;
+  try{
+    const ctx=getCtx();
+    [523,659,784,1046].forEach((f,i)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.frequency.value=f;o.type='sine';
+      const t=ctx.currentTime+i*0.1;
+      g.gain.setValueAtTime(0.15,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.22);
+      o.start(t);o.stop(t+0.22);
+    });
+  }catch(e){}
+}
+function playError(){
+  if(!musicOn) return;
+  try{
+    const ctx=getCtx();
+    [200,170].forEach((f,i)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.frequency.value=f;o.type='sawtooth';
+      const t=ctx.currentTime+i*0.15;
+      g.gain.setValueAtTime(0.12,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.2);
+      o.start(t);o.stop(t+0.2);
+    });
+  }catch(e){}
+}
+
+// ===== JAZZ ENGINE =====
+let musicOn=true, musicPlaying=false, jazzInterval=null, jazzStep=0;
+
+// Jazz chord progressions (ii-V-I in C, F, Bb, Eb)
+const JAZZ_CHORDS=[
+  // Dm7  G7   Cmaj7  (ii-V-I in C)
+  [[293,370,440],[392,494,587],[261,329,392,523]],
+  // Gm7  C7   Fmaj7
+  [[196,247,294],[261,329,392],[175,220,262,349]],
+  // Cm7  F7   Bbmaj7
+  [[261,311,370],[349,440,523],[233,294,349,466]],
+  // Fm7  Bb7  Ebmaj7
+  [[175,208,247],[233,294,349],[156,196,233,311]],
+];
+
+// Jazz melody line (notes in Hz, smooth swung feel)
+const JAZZ_MELODY=[
+  523,494,440,523, 494,440,392,440,
+  415,392,349,392, 370,349,311,349,
+  329,311,294,329, 311,294,262,294,
+  277,262,247,277, 261,247,220,261,
+];
+
+// Walking bass line
+const BASS_LINE=[130,146,164,146, 174,196,220,196, 130,146,164,146, 116,130,146,130];
+
+let chordIdx=0, melodyIdx=0, bassIdx=0;
+const BPM=100;
+
+function playJazzChord(notes, duration, vol){
+  if(!musicOn) return;
+  try{
+    const ctx=getCtx();
+    notes.forEach((f,i)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      // Add slight vibrato for jazz feel
+      const lfo=ctx.createOscillator(),lfoG=ctx.createGain();
+      lfo.frequency.value=5; lfoG.gain.value=3;
+      lfo.connect(lfoG); lfoG.connect(o.frequency);
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value=f;
+      o.type= i===0?'triangle':'sine';
+      const t=ctx.currentTime + i*0.01; // slight stagger = jazz comp feel
+      g.gain.setValueAtTime(vol*(i===0?1:0.6),t);
+      g.gain.exponentialRampToValueAtTime(0.001,t+duration*0.85);
+      lfo.start(t); o.start(t); o.stop(t+duration); lfo.stop(t+duration);
+    });
+  }catch(e){}
+}
+
+function playJazzNote(freq, duration, vol){
+  if(!musicOn) return;
+  try{
+    const ctx=getCtx();
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    // Slight pitch bend up = jazz articulation
+    o.frequency.setValueAtTime(freq*0.98,ctx.currentTime);
+    o.frequency.linearRampToValueAtTime(freq,ctx.currentTime+0.04);
+    o.type='sawtooth';
+    // Lowpass to smooth it → saxophone-like
+    const flt=ctx.createBiquadFilter();
+    flt.type='lowpass'; flt.frequency.value=1200;
+    o.connect(flt); flt.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(vol,ctx.currentTime);
+    g.gain.setValueAtTime(vol,ctx.currentTime+duration*0.6);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+duration*0.95);
+    o.start(); o.stop(ctx.currentTime+duration);
+  }catch(e){}
+}
+
+function playWalkingBass(freq, duration){
+  if(!musicOn) return;
+  try{
+    const ctx=getCtx();
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.frequency.value=freq; o.type='triangle';
+    // low pass for upright bass feel
+    const flt=ctx.createBiquadFilter();
+    flt.type='lowpass'; flt.frequency.value=400;
+    o.connect(flt); flt.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.18,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+duration*0.8);
+    o.start(); o.stop(ctx.currentTime+duration);
+  }catch(e){}
+}
+
+function playHihat(vol){
+  if(!musicOn) return;
+  try{
+    const ctx=getCtx();
+    const buf=ctx.createBuffer(1,ctx.sampleRate*0.05,ctx.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1);
+    const src=ctx.createBufferSource();
+    src.buffer=buf;
+    const g=ctx.createGain(),flt=ctx.createBiquadFilter();
+    flt.type='highpass'; flt.frequency.value=8000;
+    src.connect(flt); flt.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(vol,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.05);
+    src.start();
+  }catch(e){}
+}
+
+const TRACK_NAMES=[
+  'Smooth Warehouse Jazz 🎷',
+  'Midnight Stock Check 🌙',
+  'Blue Note Inventory 🎺',
+  'Bebop Logistics 🎵',
+  'Swing Shift Blues 🎸',
+];
+let trackIdx=0;
+
+function startJazz(){
+  if(!musicOn) return;
+  musicPlaying=true;
+  document.getElementById('play-btn').textContent='⏸';
+  document.getElementById('music-note').classList.remove('paused');
+  document.getElementById('track-name').textContent=TRACK_NAMES[0];
+
+  const beatMs=60000/BPM;
+  // Swing = long-short: 2/3 beat + 1/3 beat alternating
+  let swing=true;
+
+  jazzInterval=setInterval(()=>{
+    if(!musicOn){pauseMusic();return;}
+    const dur=swing ? (beatMs*0.6/1000) : (beatMs*0.4/1000);
+
+    // Walking bass every beat
+    playWalkingBass(BASS_LINE[bassIdx%BASS_LINE.length], beatMs/1000*0.85);
+    bassIdx++;
+
+    // Chord comp every 2 beats (half notes)
+    if(bassIdx%2===0){
+      const chordSet=JAZZ_CHORDS[chordIdx%JAZZ_CHORDS.length];
+      const chord=chordSet[Math.floor(bassIdx/2)%chordSet.length];
+      playJazzChord(chord, beatMs*2/1000*0.7, 0.05);
+    }
+
+    // Melody every beat (swung)
+    playJazzNote(JAZZ_MELODY[melodyIdx%JAZZ_MELODY.length], dur*0.9, 0.07);
+    melodyIdx++;
+
+    // Hi-hat on every beat, accent on 2&4
+    const isAccent=(bassIdx%4===1||bassIdx%4===3);
+    playHihat(isAccent?0.06:0.03);
+
+    swing=!swing;
+
+    // Change chord progression every 12 beats
+    if(bassIdx%12===0) chordIdx++;
+
+    // Change track name every 32 beats
+    if(bassIdx%32===0){
+      trackIdx=(trackIdx+1)%TRACK_NAMES.length;
+      document.getElementById('track-name').textContent=TRACK_NAMES[trackIdx];
+    }
+  }, beatMs/2); // half-beat timing for swing subdivision
+}
+
+function pauseMusic(){
+  musicPlaying=false;
+  if(jazzInterval){clearInterval(jazzInterval);jazzInterval=null;}
+  document.getElementById('play-btn').textContent='▶';
+  document.getElementById('music-note').classList.add('paused');
+}
+
+function togglePlayPause(){
+  if(musicPlaying) pauseMusic(); else startJazz();
+}
+
+function toggleMusicOnOff(){
+  musicOn=!musicOn;
+  const btn=document.getElementById('music-toggle-btn');
+  const vbtn=document.getElementById('vol-btn');
+  if(musicOn){
+    if(btn){btn.textContent='🎷 Jazz On';btn.classList.add('on');}
+    if(vbtn) vbtn.textContent='🔊';
+    if(document.getElementById('music-bar').classList.contains('visible')) startJazz();
+  } else {
+    if(btn){btn.textContent='🔇 Jazz Off';btn.classList.remove('on');}
+    if(vbtn) vbtn.textContent='🔇';
+    pauseMusic();
+  }
+}
+
+// PWA
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt',(e)=>{
+  e.preventDefault();deferredPrompt=e;
+  setTimeout(()=>document.getElementById('install-banner').classList.add('show'),4000);
+});
+function installPWA(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;closeBanner();});}}
+function closeBanner(){document.getElementById('install-banner').classList.remove('show');}
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
