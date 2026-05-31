@@ -1,18 +1,37 @@
 {
-  "name": "GDRM PORTAL",
-  "short_name": "GDRM LEVEL UP",
+  "name": "WMS GDRM Portal",
+  "short_name": "WMS GDRM",
   "description": "Warehouse Management System GDRM - Portal Monitoring & Penginputan",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0F1923",
   "theme_color": "#0F1923",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "logo.png",
+      "src": "/logo-any.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo-any.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/logo-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/logo-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
